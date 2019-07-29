@@ -1,0 +1,268 @@
+import QtQuick 2.6
+import QtQuick.Window 2.2
+import Qt.labs.platform 1.1
+import QtQuick.Controls 2.0
+
+import top.frto027.flyric 1.0
+
+Window {
+    visible: true
+    width: 640
+    height: 480
+    title: qsTr("Flyric Qt Daemon Configure")
+
+    FlyricConfigManager{
+        id:flyricConfigManager
+    }
+    /* default font */
+    FileDialog{
+        id:defaultFontDialog
+        currentFile: defaultFontTextField.text
+        onAccepted: {
+            const pre = "file:///"
+            var f = file.toString()
+            // if(f.startsWith(pre))
+            if(f.substring(0,pre.length) === pre){
+                f = f.substring(pre.length)
+            }
+            defaultFontTextField.text = f
+        }
+    }
+
+    Text {
+        x: 20
+        y: 12
+        text: qsTr("Default font file:")
+        font.pixelSize: 12
+    }
+
+
+    TextField {
+        id: defaultFontTextField
+        x: 15
+        y: 30
+        width: 345
+        height: 40
+        text: flyricConfigManager.getDefaultFontPath()
+    }
+
+    Button {
+        x: 377
+        y: 30
+        text: qsTr("Browse")
+        onClicked: defaultFontDialog.open()
+    }
+    /* font folder */
+    Text {
+        x: 20
+        y: 83
+        text: qsTr("Font folders:")
+        font.pixelSize: 12
+    }
+
+    Rectangle{
+        x: 15
+        y: 101
+        width: 345
+        height: 145
+        clip: false
+        border.color: "#f66e6e"
+
+        ListView{
+            id:fontFolderListView
+            anchors.rightMargin: 6
+            anchors.topMargin: 6
+            anchors.leftMargin: 6
+            anchors.bottomMargin: 6
+            clip: true
+            anchors.fill: parent
+
+            model: ListModel{
+                id:fontFoldersLM
+                /*
+                ListElement{
+                    path:"aaa"
+                }
+                ListElement{
+                    path:"bbb"
+                }
+                */
+                //load default font folders
+                Component.onCompleted: {
+                    var x = flyricConfigManager.getDefaultFontFolders()
+                    for(var i=0;i<x.length;i++){
+                        fontFoldersLM.append({path:x[i]})
+                    }
+                }
+            }
+
+
+            delegate: SwipeDelegate {
+                width: parent.width
+                text: path
+                swipe.right: Label{
+                    text: qsTr("Remove")
+                    verticalAlignment: Label.AlignVCenter
+                    padding: 12
+                    height: parent.height
+                    anchors.right: parent.right
+                    background: Rectangle {
+                        color: parent.pressed ? Qt.darker("tomato", 1.1) : "tomato"
+                    }
+                    SwipeDelegate.onClicked: fontFoldersLM.remove(index)
+                }
+            }
+
+            add: Transition {
+                NumberAnimation { properties: "x"; from: -fontFolderListView.width; duration: 200 }
+            }
+            remove: Transition {
+                ParallelAnimation {
+                    NumberAnimation { properties: "x"; to: -fontFolderListView.width; duration: 200 }
+                }
+            }
+        }
+
+    }
+    Popup {
+        id: folderAldreadyExist
+        anchors.centerIn: parent
+        Text {
+            text: qsTr("Folder already exist in the list")
+        }
+    }
+
+    FolderDialog{
+        id:fontFolderDialog
+        onAccepted: {
+            var f = folder.toString()
+            const pre = "file:///"
+            if(f.substring(0,pre.length)===pre)
+                f = f.substring(pre.length)
+            var i;
+            for(i=0;i<fontFoldersLM.count;i++){
+                if(fontFoldersLM.get(i).path === f)
+                    break
+            }
+            if(i === fontFoldersLM.count)
+                fontFoldersLM.append({path:f})
+            else
+                folderAldreadyExist.open()
+        }
+    }
+
+    Button {
+        x: 377
+        y: 106
+        width: 100
+        height: 35
+        text: qsTr("Add")
+        onClicked:fontFolderDialog.open()
+    }
+
+    /* start button */
+    Button {
+        id: button
+        x: 15
+        y: 422
+        text: qsTr("Save and Start")
+        onClicked: {
+            flyricConfigManager.setDefaultFont(defaultFontTextField.text)
+
+            var folder = []
+            for(var i=0;i<fontFoldersLM.count;i++)
+                folder.push(fontFoldersLM.get(i).path)
+            flyricConfigManager.setFontFolder(folder)
+
+            flyricConfigManager.setUdpPort(parseInt(portTextField.text))
+
+            flyricConfigManager.save()
+            flyricConfigManager.start()
+        }
+    }
+
+    Text {
+        x: 20
+        y: 266
+        text: qsTr("UDP Port:")
+        font.pixelSize: 12
+    }
+
+    TextField {
+        id: portTextField
+        x: 88
+        y: 252
+        width: 75
+        height: 40
+        inputMethodHints: Qt.ImhDigitsOnly
+        validator: IntValidator {bottom: 0; top: 99999;}
+        text: flyricConfigManager.getUdpPort() + ""
+        onEditingFinished: {
+            var x = parseInt(text)
+            if(x > 65535){
+                portTextField.text = "65535"
+            }
+        }
+    }
+
+    Text {
+        x: 169
+        y: 266
+        text: qsTr("( 0 - 65535 )")
+        font.pixelSize: 12
+    }
+
+    /*
+    SystemTrayIcon{
+        visible: true
+        iconSource:"qrc:/icon.png"
+        menu: Menu {
+            MenuItem {
+                text: qsTr("Quit")
+                onTriggered: Qt.quit()
+            }
+        }
+    }
+    */
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*##^## Designer {
+    D{i:9;anchors_height:226;anchors_width:345;anchors_x:"-162";anchors_y:"-33"}
+}
+ ##^##*/

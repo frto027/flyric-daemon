@@ -7,6 +7,7 @@
 class FlyricConfigManager : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QString confPath READ getConfigFilePath CONSTANT)
 public:
     explicit FlyricConfigManager(QObject *parent = nullptr);
 
@@ -21,14 +22,15 @@ public:
     Q_INVOKABLE bool save();
     Q_INVOKABLE bool load();
 
+    void getWindowConfigure(QJsonObject & obj);
+    void setWindowConfigure(const QJsonObject & obj);
+
 signals:
 
 public slots:
-    void start();
 
 private:
     QJsonObject savedObject;
-
     static QString getConfigFilePath(){
         return "D:/test.json";
     }

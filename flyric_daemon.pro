@@ -1,4 +1,5 @@
 QT += quick
+#QT += opengl
 CONFIG += c++11
 
 # The following define makes your compiler emit warnings if you use
@@ -14,6 +15,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         flyricconfigmanager.cpp \
+        flyricwindowthread.cpp \
+        glad/src/glad.c \
         main.cpp
 
 RESOURCES += qml.qrc
@@ -32,4 +35,15 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 DISTFILES +=
 
 HEADERS += \
-    flyricconfigmanager.h
+    flyricconfigmanager.h \
+    flyricwindowthread.h
+
+# This is glfw library
+win32: LIBS += -L$$PWD/glfw/lib-mingw-w64/ -lglfw3 -lgdi32
+
+INCLUDEPATH += $$PWD/glfw/include
+DEPENDPATH += $$PWD/glfw/include
+
+win32: LIBS += -lopengl32
+# This is glad library
+INCLUDEPATH += glad/include

@@ -1,0 +1,1 @@
+This is glfw WIN64 binary release

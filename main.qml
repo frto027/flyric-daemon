@@ -1,6 +1,7 @@
-import QtQuick 2.6
+import QtQuick 2.8
 import QtQuick.Window 2.2
-import Qt.labs.platform 1.1
+/* Qt.labs.platform.Menu is duplicate with Qt.Quick.Controls.Menu */
+import Qt.labs.platform 1.1 as QtLab
 import QtQuick.Controls 2.0
 
 import top.frto027.flyric 1.0
@@ -9,13 +10,61 @@ Window {
     visible: true
     width: 640
     height: 480
+    /* fixed size */
+    maximumHeight: height
+    minimumHeight: height
+    maximumWidth: width
+    minimumWidth: width
+
     title: qsTr("Flyric Qt Daemon Configure")
 
     FlyricConfigManager{
         id:flyricConfigManager
     }
+    FlyricWindowThread{
+        id:flyricWindowThread
+        onWindowExit: /*window.*/Qt.quit()
+    }
+    QtLab.SystemTrayIcon{
+        id:systemTrayIcon
+        visible: false
+        iconSource:"qrc:/icon.png"
+        menu:QtLab.Menu{
+            QtLab.MenuItem{
+                text: qsTr("Always on top")
+                checked: flyricWindowThread.isTop
+                onTriggered: {
+                    flyricWindowThread.isTop = ! flyricWindowThread.isTop
+                }
+            }
+
+            QtLab.MenuItem{
+                text: qsTr("Resize")
+                checked:flyricWindowThread.isResizeable
+                onTriggered: {
+                    flyricWindowThread.isResizeable = ! flyricWindowThread.isResizeable
+                }
+            }
+
+            QtLab.MenuItem{
+                text: qsTr("Background transparent(may need restart)")
+                checked: flyricWindowThread.isBackgroundTransparent
+                onTriggered: {
+                    flyricWindowThread.isBackgroundTransparent = ! flyricWindowThread.isBackgroundTransparent
+                }
+            }
+
+            QtLab.MenuItem{
+                text: qsTr("Exit")
+                onTriggered: {
+                    close()
+                    flyricWindowThread.exitWindow()
+                }
+            }
+        }
+    }
     /* default font */
-    FileDialog{
+    QtLab.FileDialog{
         id:defaultFontDialog
         currentFile: defaultFontTextField.text
         onAccepted: {
@@ -132,7 +181,7 @@ Window {
         }
     }
 
-    FolderDialog{
+    QtLab.FolderDialog{
         id:fontFolderDialog
         onAccepted: {
             var f = folder.toString()
@@ -177,7 +226,12 @@ Window {
             flyricConfigManager.setUdpPort(parseInt(portTextField.text))
 
             flyricConfigManager.save()
-            flyricConfigManager.start()
+
+            /*window.*/hide()
+            flyricWindowThread.createAndShow(flyricConfigManager)
+
+            systemTrayIcon.show()
+
         }
     }
 
@@ -212,19 +266,32 @@ Window {
         font.pixelSize: 12
     }
 
-    /*
-    SystemTrayIcon{
-        visible: true
-        iconSource:"qrc:/icon.png"
-        menu: Menu {
-            MenuItem {
-                text: qsTr("Quit")
-                onTriggered: Qt.quit()
-            }
-        }
+    TextEdit {
+        id: textEdit
+        x: 300
+        y: 453
+        width: 340
+        height: 27
+        text: qsTr("ConfPath:") + flyricConfigManager.confPath
+        renderType: Text.NativeRendering
+        horizontalAlignment: Text.AlignRight
+        cursorVisible: true
+        readOnly: true
+        font.pixelSize: 12
     }
-    */
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 

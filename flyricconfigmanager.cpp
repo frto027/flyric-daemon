@@ -63,6 +63,18 @@ int FlyricConfigManager::getUdpPort(){
     }
     return 9588;
 }
+
+void FlyricConfigManager::setWindowConfigure(const QJsonObject &obj){
+    savedObject["windConf"]=obj;
+    save();
+}
+void FlyricConfigManager::getWindowConfigure(QJsonObject &obj){
+    if(savedObject.contains("windConf")){
+        obj = savedObject["windConf"].toObject();
+    }else{
+        obj = QJsonObject();
+    }
+}
 bool FlyricConfigManager::save(){
     //TODO
     QFile saveFile(getConfigFilePath());
@@ -84,7 +96,4 @@ bool FlyricConfigManager::load(){
 
     savedObject = QJsonDocument::fromJson(saveFile.readAll()).object();
     return true;
-}
-void FlyricConfigManager::start(){
-    //TODO:load all fonts
 }

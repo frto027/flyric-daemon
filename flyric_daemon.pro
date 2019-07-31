@@ -36,7 +36,8 @@ DISTFILES +=
 
 HEADERS += \
     flyricconfigmanager.h \
-    flyricwindowthread.h
+    flyricwindowthread.h \
+    glenv.h
 
 # This is glfw library
 win32: LIBS += -L$$PWD/glfw/lib-mingw-w64/ -lglfw3 -lgdi32
@@ -63,3 +64,9 @@ SOURCES += \
 #-- auxiliary modules
 SOURCES += \
   freetype2/src/autofit/autofit.c freetype2/src/cache/ftcache.c freetype2/src/gzip/ftgzip.c freetype2/src/lzw/ftlzw.c freetype2/src/bzip2/ftbzip2.c freetype2/src/gxvalid/gxvalid.c freetype2/src/otvalid/otvalid.c freetype2/src/psaux/psaux.c freetype2/src/pshinter/pshinter.c freetype2/src/psnames/psnames.c
+# flyric_rendergl
+INCLUDEPATH += flyric_rendergl/src
+SOURCES += flyric_rendergl/src/flyric_rendergl.c
+# flyric_rendergl/flyric_parser
+INCLUDEPATH += flyric_rendergl/flyric_parser/include
+SOURCES += flyric_rendergl/flyric_parser/src/fparser.c flyric_rendergl/flyric_parser/src/fparser_platform.c flyric_rendergl/flyric_parser/src/frp_bison.tab.c flyric_rendergl/flyric_parser/src/lex.frp_bison.c

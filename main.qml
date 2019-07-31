@@ -30,6 +30,18 @@ Window {
         visible: false
         iconSource:"qrc:/icon.png"
         menu:QtLab.Menu{
+            QtLab.Menu{
+                title: "Debug"
+                QtLab.MenuItem{
+                    text:"pause"
+                    onTriggered: flyricWindowThread.pause_now()
+                }
+                QtLab.MenuItem{
+                    text:"play"
+                    onTriggered: flyricWindowThread.play_continue()
+                }
+            }
+
             QtLab.MenuItem{
                 text: qsTr("Always on top")
                 checked: flyricWindowThread.isTop

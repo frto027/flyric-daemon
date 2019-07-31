@@ -1,3 +1,6 @@
 [submodule "freetype2"]
 	path = freetype2
 	url = git://git.savannah.gnu.org/freetype/freetype2.git
+[submodule "flyric_rendergl"]
+	path = flyric_rendergl
+	url = git@github.com:frto027/flyric_rendergl.git

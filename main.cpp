@@ -5,7 +5,6 @@
 #include "flyricconfigmanager.h"
 
 #include "flyricwindowthread.h"
-
 int main(int argc, char *argv[])
 {
 

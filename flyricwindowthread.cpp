@@ -4,6 +4,9 @@ extern "C"{
 #include "GLFW/glfw3.h"
 }
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #include <QDebug>
 
 #define KEY_TRANS "isTrans"
@@ -23,6 +26,12 @@ void FlyricWindowThread::exitWindow(){
     noBreak = false;
 }
 void FlyricWindowThread::run(){
+    FT_Library ftlib;
+    if(FT_Init_FreeType(&ftlib)){
+        qDebug()<<"Freetype init error";
+    }else{
+        qDebug()<<"Freetype init success";
+    }
 
     if(config){
         auto d = qDebug()<<"Configure ok:\n";
@@ -123,6 +132,8 @@ void FlyricWindowThread::run(){
     }
     glfwDestroyWindow(window);
     glfwTerminate();
+
+    FT_Done_FreeType(ftlib);
 
     /*save configure*/
     config->setWindowConfigure(windConf);

@@ -244,6 +244,8 @@ Window {
 
             systemTrayIcon.show()
 
+            flyricWindowThread.startUdpServer()
+
         }
     }
 

@@ -12,7 +12,8 @@ extern "C"{
 
 #include <QFile>
 #include <QDateTime>
-
+#include <QNetworkDatagram>
+#include <QtEndian>
 #include <QDebug>
 
 #define KEY_TRANS "isTrans"
@@ -144,10 +145,10 @@ void FlyricWindowThread::run(){
 
     frg_fontsize_set(FONT_SIZE);
     frg_screensize_set(frp_size(windConf.contains(KEY_W)?windConf[KEY_W].toInt():DEFAULT_WINDOW_WIDTH),
-                                       frp_size(windConf.contains(KEY_H)?windConf[KEY_H].toInt():DEFAULT_WINDOW_HEIGHT));
+                       frp_size(windConf.contains(KEY_H)?windConf[KEY_H].toInt():DEFAULT_WINDOW_HEIGHT));
 
     glfwSetWindowSizeCallback(window,[](GLFWwindow *,int w,int h){
-       frg_screensize_set(frp_size(w),frp_size(h));
+        frg_screensize_set(frp_size(w),frp_size(h));
     });
 
     /* Debug only */
@@ -156,7 +157,8 @@ void FlyricWindowThread::run(){
         QFile file("C:/Users/q6027/Desktop/lrc.txt");
         if(file.open(QIODevice::ReadOnly)){
             auto bts = file.readAll();
-            lyric_file = frpopen((unsigned char *)bts.data(),file.size(),0);
+
+            lyric_file = frpopen(reinterpret_cast<unsigned char *>(bts.data()),frp_size(file.size()),0);
             frg_loadlyric(lyric_file);
             lyric_is_loaded = true;
             qDebug()<<"Debug:Load lyric success";
@@ -164,12 +166,14 @@ void FlyricWindowThread::run(){
             qDebug()<<"Debug:Load failed";
         }
     }
+
     while (noBreak && !glfwWindowShouldClose(window))
     {
         {
             QString * lyric_name = this->switch_lyric_name.fetchAndStoreRelaxed(nullptr);
             if(lyric_name != nullptr){
                 //TODO:switch to new lyric
+                qDebug()<<"Switch lyric:"<<*lyric_name;
 
                 delete lyric_name;
             }
@@ -245,4 +249,91 @@ void FlyricWindowThread::run(){
     /*save configure*/
     config->setWindowConfigure(windConf);
     emit windowExit(EXIT_SUCCESS);
+}
+
+/* udp server */
+
+void FlyricWindowThread::startUdpServer(){
+    if(!config || config == nullptr){
+        qDebug()<<"Error UDP init:no config";
+        return;
+    }
+    int port = config->getUdpPort();
+    qDebug()<<"Listening udp at localhost:"<<port;
+    if(udp_socket != nullptr){
+        delete udp_socket;
+    }
+    udp_socket = new QUdpSocket(this);
+    udp_socket->bind(QHostAddress::LocalHost,quint16(port));
+    connect(udp_socket,SIGNAL(readyRead()),this,SLOT(datagramReceived()));
+
+}
+
+void FlyricWindowThread::datagramReceived(){
+    qDebug()<<"RECEIVED";
+    while(udp_socket->hasPendingDatagrams()){
+        auto datagram = udp_socket->receiveDatagram();
+        parseDatagram(datagram.data());
+    }
+}
+void FlyricWindowThread::parseDatagram(const QByteArray &data){
+    /* skip id */
+    const quint32 skip_range = 0x7FFFFFFF;
+    static quint32 skip_data_from = 0 - skip_range;
+    static quint32 skip_data_to = 0;
+    const char * cdata = data.data();
+    if(data.length() < 8){
+        //invalid data
+        return;
+    }
+    quint32 id = qFromBigEndian<quint32>(cdata);
+    if(id){
+        if(skip_data_from < skip_data_to){
+            if(skip_data_from <= id && id <= skip_data_to){
+                return;
+            }
+        }else{
+            if(skip_data_from <= id || id <= skip_data_to){
+                return;
+            }
+        }
+    }
+    skip_data_to = id;
+    skip_data_from = id - skip_range;
+
+    quint32 type = qFromBigEndian<quint32>(cdata + 4);
+    switch(type){
+    case UDP_DATA_TYPE_LOADLYRIC:
+    {
+        QString * lyric_name = new QString(QString::fromUtf8(cdata + 8,data.size() - 8));
+        lyric_name = this->switch_lyric_name.fetchAndStoreRelaxed(lyric_name);
+        if(lyric_name){
+            //说明有一个歌词来不及换就又上了另一个歌词，以这个为准
+            delete lyric_name;
+        }
+    }
+        break;
+    case UDP_DATA_TYPE_PAUSE_TIME:
+    {
+        if(data.length() < 16)
+            return;
+        qint64 time = qFromBigEndian<qint64>(cdata + 8);
+        this->pause(time);
+    }
+        break;
+    case UDP_DATA_TYPE_PLAY_TIME:
+    {
+        if(data.length() < 16)
+            return;
+        qint64 time = qFromBigEndian<qint64>(cdata + 8);
+        this->play(time);
+    }
+        break;
+    case UDP_DATA_TYPE_PLAY_NOW:
+        this->play_continue();
+        break;
+    case UDP_DATA_TYPE_PAUSE_NOW:
+        this->pause_now();
+        break;
+    }
 }

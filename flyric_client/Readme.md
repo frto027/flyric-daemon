@@ -1,0 +1,2 @@
+# 这是什么
+flyric的客户端支持库封装，用这些库可以连接flyric_daemon

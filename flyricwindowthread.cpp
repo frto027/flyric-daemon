@@ -154,7 +154,7 @@ void FlyricWindowThread::run(){
     /* Debug only */
     //load a temp lyric
     {
-        QFile file("C:/Users/q6027/Desktop/lrc.txt");
+        QFile file("H:/test.frc");
         if(file.open(QIODevice::ReadOnly)){
             auto bts = file.readAll();
 
@@ -167,8 +167,15 @@ void FlyricWindowThread::run(){
         }
     }
 
+    double last_time = glfwGetTime();
     while (noBreak && !glfwWindowShouldClose(window))
     {
+        double remain = glfwGetTime() - last_time;
+        if(remain <  1./60){
+            msleep(static_cast<unsigned long>(1./60 - remain));
+        }
+        last_time += 1./60;
+
         {
             QString * lyric_name = this->switch_lyric_name.fetchAndStoreRelaxed(nullptr);
             if(lyric_name != nullptr){

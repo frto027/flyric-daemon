@@ -1,6 +1,6 @@
 This is foobar2000 componemt of flyric_client  
 
-正在开发中，GUID等各种东西都没有修改完善
+正在开发中
 
 enviroment:  
 foobar sdk version:SDK-2019-7-26  

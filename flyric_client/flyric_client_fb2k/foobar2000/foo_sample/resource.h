@@ -34,6 +34,14 @@
 #define IDC_LIST1                       1019
 #define IDC_LIST                        1019
 #define IDC_HEADER                      1020
+#define IDC_IPADDRESS_REMOTE            1025
+#define IDC_EDIT_REMOTE_PORT            1026
+#define IDC_CHECK_ENABLE_REMOTE         1027
+#define IDC_CHECK_ENABLE_CONSOLE        1028
+#define IDC_EDIT_RENDER_NAME            1029
+#define IDC_EDIT_RENDER_NAME_RENDEROUTPUT 1030
+#define IDC_BUTTON1                     1031
+#define IDC_BUTTON_REFRESH_PRIVIEW      1031
 
 // Next default values for new objects
 // 
@@ -41,7 +49,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        111
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1022
+#define _APS_NEXT_CONTROL_VALUE         1032
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

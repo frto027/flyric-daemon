@@ -11,6 +11,13 @@
 #include <atltime.h>
 #include <atlsocket.h>
 
+//configure functions
+bool flyric_client_cfg_enable_remote();
+bool flyric_client_cfg_enable_console();
+const char* flyric_client_cfg_remote_ip();
+int flyric_client_cfg_remote_port();
+const char* flyric_cfg_changed_render_text();
+const char* flyric_cfg_render_text();
 
 struct PackageData {
 	char* data;
@@ -49,7 +56,14 @@ private:
 				console::formatter() << ERROR_PREFIX"socket create error:" << WSAGetLastError();
 			}
 		}
-		CreateThread(NULL, 0, &SendPackageThreadFunc, pdata, 0, NULL);
+		if (flyric_client_cfg_enable_remote()) {
+			CreateThread(NULL, 0, &SendPackageThreadFunc, pdata, 0, NULL);
+		}
+		else {
+			delete[] pdata->data;
+			delete pdata;
+		}
+		
 	}
 
 	
@@ -94,12 +108,21 @@ public:
 
 private:
 	bool isLogToConsole() {
-		return true;
+		return flyric_client_cfg_enable_console();
 	}
 
 	pfc::string get_title() {
+
+		{//update render text
+			const char* rtext = flyric_cfg_changed_render_text();
+			if (rtext != NULL) {
+				static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(m_titleformat_obj, rtext);
+			}
+		}
+
 		if (m_titleformat_obj.is_empty()) {
-			static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(m_titleformat_obj, "%title%");
+			//static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(m_titleformat_obj, "%title%");
+			static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(m_titleformat_obj, flyric_cfg_render_text());
 		}
 		pfc::string_formatter output;
 		playback_control::get()->playback_format_title(NULL, output, m_titleformat_obj, NULL, playback_control::display_level_all);
@@ -165,8 +188,8 @@ DWORD WINAPI flyric_progress_callback::SendPackageThreadFunc(LPVOID data) {
 	sockaddr_in addr;
 	addr.sin_family = AF_INET;
 	//a warring C4996.I don't care.
-	addr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
-	addr.sin_port = htons(9588);
+	addr.sin_addr.S_un.S_addr = inet_addr(flyric_client_cfg_remote_ip());
+	addr.sin_port = htons(flyric_client_cfg_remote_port());
 	if (sendto(send_socket, pdata->data, pdata->len, 0, (sockaddr*)& addr, sizeof(addr)) < 0) {
 		console::formatter() << ERROR_PREFIX"Socket send error:" << errno;
 	}

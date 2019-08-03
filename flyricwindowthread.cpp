@@ -27,6 +27,23 @@ extern "C"{
 
 #define FONT_SIZE 60
 
+static char predefined_loading_lyric[] = "[curve]\n\
+mm(x):x*x*x*x*x*x\n\
+\n\
+[anim]\n\
+Name,Property,Func,During,Offset,Hard\n\
+Fade,ColorR,mm((x-0.5)*2),[Duration],0,F\n\
+# A renderer bug\n\
+Rotate,RotateZ,x*2*3.1415926,[Duration],0,F\n\
+[flyc]\n\
+Type,StartTime,Text,Duration,ColorR,ColorG,ColorB,ColorA,Anim,RotateZ,AnchorX,AnchorY,SelfAnchorX,SelfAnchorY\n\
+line,0,N,1000,1,0,1,0,Fade,0,0.5,0.5,0.5,0.5\n\
+word,>>200,L,4000\n\
+,,O\n,,A\n,,D\n,,I\n,,N\n,,G\n\
+";
+static FRPFile * predefined_loading_lyric_file;
+#define PREDEFINED_LOAD_LYRIC_TIME 10000
+
 void FlyricWindowThread::createAndShow(FlyricConfigManager *manager){
     config = manager;
     config->getWindowConfigure(windConf);
@@ -151,8 +168,12 @@ void FlyricWindowThread::run(){
         frg_screensize_set(frp_size(w),frp_size(h));
     });
 
+    predefined_loading_lyric_file = frpopen(reinterpret_cast<unsigned char *>(predefined_loading_lyric),sizeof(predefined_loading_lyric),1);
+    frg_loadlyric(predefined_loading_lyric_file);
+
     /* Debug only */
     //load a temp lyric
+#if 0
     {
         QFile file("H:/test.frc");
         if(file.open(QIODevice::ReadOnly)){
@@ -166,6 +187,7 @@ void FlyricWindowThread::run(){
             qDebug()<<"Debug:Load failed";
         }
     }
+#endif
 
     double last_time = glfwGetTime();
     while (noBreak && !glfwWindowShouldClose(window))
@@ -218,16 +240,26 @@ void FlyricWindowThread::run(){
         }
 
         glClear(GL_COLOR_BUFFER_BIT);
-        if(lyric_is_loaded){
-            if(play_is_paused){
-                current_lyric_time = paused_time;
+        {
+            if(lyric_is_loaded){
+                if(play_is_paused){
+                    current_lyric_time = paused_time;
+                }else{
+                    current_lyric_time = getTime() - play_begin_time;
+                }
+                for(auto node = frp_play_getline_by_time(lyric_file,current_lyric_time);node;node=node->next){
+                    frg_renderline(node->line,current_lyric_time);
+                }
             }else{
-                current_lyric_time = getTime() - play_begin_time;
+                qint64 tim = getTime() - play_begin_time;
+                tim %= PREDEFINED_LOAD_LYRIC_TIME;
+
+                for(auto node = frp_play_getline_by_time(predefined_loading_lyric_file,tim);node;node=node->next){
+                    frg_renderline(node->line,tim);
+                }
             }
 
-            for(auto node = frp_play_getline_by_time(lyric_file,current_lyric_time);node;node=node->next){
-                frg_renderline(node->line,current_lyric_time);
-            }
+
         }
 
         glfwSwapBuffers(window);

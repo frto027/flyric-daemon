@@ -2,45 +2,20 @@
 // Microsoft Visual C++ 生成的包含文件。
 // 供 foo_sample.rc 使用
 //
-#define IDD_PLAYBACK_STATE              101
-#define IDD_DSP                         102
-#define IDD_UI_ELEMENT                  103
-#define IDD_THREADS                     105
-#define IDD_LISTCONTROL_DEMO            107
 #define IDI_ICON1                       109
 #define IDI_SCROLL                      109
 #define IDD_MYPREFERENCES               148
 #define IDC_BOGO1                       1001
 #define IDC_BOGO2                       1002
-#define IDC_PATTERN                     1002
-#define IDC_STATE                       1003
 #define IDC_BOGO3                       1003
-#define IDC_PLAY                        1004
-#define IDC_PAUSE                       1005
-#define IDC_STOP                        1006
-#define IDC_PREV                        1007
-#define IDC_NEXT                        1008
-#define IDC_RAND                        1009
-#define IDC_CONTEXTMENU                 1010
 #define IDC_SLIDER1                     1012
-#define IDC_SLIDER                      1012
-#define IDC_SLIDER_LABEL                1013
-#define IDC_LOCK_MIN_WIDTH              1014
-#define IDC_LOCK_MIN_HEIGHT             1015
 #define IDC_CHECK3                      1016
-#define IDC_LOCK_MAX_WIDTH              1016
-#define IDC_LOCK_MAX_HEIGHT             1017
-#define IDC_STATIC_SIZE                 1018
-#define IDC_LIST1                       1019
-#define IDC_LIST                        1019
-#define IDC_HEADER                      1020
 #define IDC_IPADDRESS_REMOTE            1025
 #define IDC_EDIT_REMOTE_PORT            1026
 #define IDC_CHECK_ENABLE_REMOTE         1027
 #define IDC_CHECK_ENABLE_CONSOLE        1028
 #define IDC_EDIT_RENDER_NAME            1029
 #define IDC_EDIT_RENDER_NAME_RENDEROUTPUT 1030
-#define IDC_BUTTON1                     1031
 #define IDC_BUTTON_REFRESH_PRIVIEW      1031
 
 // Next default values for new objects

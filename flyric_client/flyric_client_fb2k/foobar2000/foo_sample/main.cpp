@@ -8,4 +8,4 @@ DECLARE_COMPONENT_VERSION("Flyric client","1.0","flyric udp client for foobar200
 
 
 // This will prevent users from renaming your component around (important for proper troubleshooter behaviors) or loading multiple instances of it.
-VALIDATE_COMPONENT_FILENAME("foo_sample.dll");
+VALIDATE_COMPONENT_FILENAME("foo_flyric_client.dll");

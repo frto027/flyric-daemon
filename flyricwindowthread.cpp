@@ -85,6 +85,10 @@ void FlyricWindowThread::switch_lyric(QString lyric_name){
     }
 }
 
+void glfwErrCb(int err,const char * msg){
+    qDebug()<<"GLFW Error["<<err<<"]:"<<msg;
+}
+
 void FlyricWindowThread::run(){
     if(config){
         auto d = qDebug()<<"Configure ok:\n";
@@ -118,6 +122,9 @@ void FlyricWindowThread::run(){
         emit windowExit(EXIT_FAILURE);
         return;
     }
+
+    glfwSetErrorCallback(&glfwErrCb);
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 
@@ -228,9 +235,9 @@ void FlyricWindowThread::run(){
         if(checkIgnoreMouse){
             checkIgnoreMouse = false;
             if(isTop && isTransparent && !isResizeable){
-                //TODO ???
-                //GLFW目前是否支持相关特性？ https://github.com/glfw/glfw/issues/1236
-                //需要修改GLFW源代码
+                glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_IGNORE);
+            }else{
+                glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
             }
         }
         {

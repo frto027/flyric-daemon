@@ -39,6 +39,10 @@ udp接受顺序不能保证，因此在开头加入时间戳，因为播放以�
 ### UDP_DATA_TYPE_PLAY_NOW/UDP_DATA_TYPE_PAUSE_NOW
 直接暂停播放，不进行时钟同步，不建议使用
 
+# GLFW hack
+
+以hack代码的方式，修改了小部分GLFW源代码并重新编译，支持Windows下的鼠标穿透功能，当开启背景透明、固定尺寸时默认直接启动鼠标穿透，修改的GLFW见[我的GLFW分支](https://github.com/frto027/glfw/tree/flyric_used_glfw)
+
 # 相关项目
 - [QT5](https://www.qt.io/)(配置界面等除OpenGL外的相关UI)
 - [Glad](https://github.com/dav1dde/glad-web)(OpenGL函数)

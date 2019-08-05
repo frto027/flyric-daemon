@@ -14,6 +14,9 @@ extern "C"{
 #include <QDateTime>
 #include <QNetworkDatagram>
 #include <QtEndian>
+#include <QFileInfo>
+#include <QDirIterator>
+#include <QMap>
 #include <QDebug>
 
 #define KEY_TRANS "isTrans"
@@ -27,20 +30,22 @@ extern "C"{
 
 #define FONT_SIZE 60
 
-static char predefined_loading_lyric[] = "[curve]\n\
-mm(x):x*x*x*x*x*x\n\
-\n\
-[anim]\n\
-Name,Property,Func,During,Offset,Hard\n\
-Fade,ColorR,mm((x-0.5)*2),[Duration],0,F\n\
-# A renderer bug\n\
-Rotate,RotateZ,x*2*3.1415926,[Duration],0,F\n\
-[flyc]\n\
-Type,StartTime,Text,Duration,ColorR,ColorG,ColorB,ColorA,Anim,RotateZ,AnchorX,AnchorY,SelfAnchorX,SelfAnchorY\n\
-line,0,N,1000,1,0,1,0,Fade,0,0.5,0.5,0.5,0.5\n\
-word,>>200,L,4000\n\
-,,O\n,,A\n,,D\n,,I\n,,N\n,,G\n\
-";
+static char predefined_loading_lyric[] = "[curve]\n"
+                                         "mm(x):x*x*x*x*x*x\n"
+                                         "midfast(x):6*(x*x/2-x*x*x/3)\n"
+                                         "\n"
+                                         "[anim]\n"
+                                         "Name,Property,Func,During,Offset,Hard\n"
+                                         "Fade,ColorR,mm((x-0.5)*2),[Duration],0,F\n"
+                                         "Swing,TransX,sin(midfast(x)*2*3.1415926 * 20) * 0.1,[Duration],0,F\n"
+                                         "# A renderer bug\n"
+                                         "Rotate,RotateZ,x*2*3.1415926,[Duration],0,F\n"
+                                         "[flyc]\n"
+                                         "Type,StartTime,Text,Duration,ColorR,ColorG,ColorB,ColorA,Anim,RotateZ,AnchorX,AnchorY,SelfAnchorX,SelfAnchorY,TransX,TransY\n"
+                                         "line,0,N,1000,1,0,1,0,Fade,0,0.5,0.5,0.5,0.5\n"
+                                         "word,0,n(*≧▽≦*)n ,4000,1,0,1,0,Fade|Swing\n"
+                                         ",200,fly,4000,1,0,1,0,Fade\n"
+                                         ",>>200,ric\n,, -\n,,0.0.0\n,,-\n,,preview\n";
 static FRPFile * predefined_loading_lyric_file;
 #define PREDEFINED_LOAD_LYRIC_TIME 10000
 
@@ -115,6 +120,9 @@ void FlyricWindowThread::run(){
     play_begin_time = getTime();
     FRPFile * lyric_file = nullptr;
     bool lyric_is_loaded = false;
+
+    QDir frc_dir(config->getFrcFolder());
+    QString current_lyric_name("");
 
     GLFWwindow* window;
 
@@ -210,7 +218,36 @@ void FlyricWindowThread::run(){
             if(lyric_name != nullptr){
                 //TODO:switch to new lyric
                 qDebug()<<"Switch lyric:"<<*lyric_name;
+                if(current_lyric_name != *lyric_name){
+                    frg_unloadlyrc();
+                    if(lyric_file)
+                        frpdestroy(lyric_file);
+                    lyric_file = nullptr;
 
+                    try {
+                        QFileInfo finfo(frc_dir,(*lyric_name)+".frc");
+                        qDebug()<<(*lyric_name)+".frc";
+                        if(!finfo.absoluteDir().absolutePath().startsWith(frc_dir.absolutePath()) || !finfo.exists())
+                            throw 1;//1 means file not exist
+                        QFile file(finfo.absoluteFilePath());
+                        if(!file.open(QIODevice::ReadOnly))
+                            throw 2;//2 means file open failed
+                        QByteArray arr(file.readAll());
+                        lyric_file = frpopen(reinterpret_cast<unsigned char *>(arr.data()),frp_size(arr.length()),0);
+                        if(!lyric_file)
+                            lyric_file = nullptr;
+                        if(lyric_file == nullptr)
+                            throw 3;//3 means parse error
+                        frg_loadlyric(lyric_file);
+                        lyric_is_loaded = true;
+                        current_lyric_name = *lyric_name;
+                    } catch (int) {
+                        //load lyric failed
+                        frg_loadlyric(predefined_loading_lyric_file);
+                        lyric_is_loaded = false;
+                        current_lyric_name = "";
+                    }
+                }
                 delete lyric_name;
             }
         }
@@ -316,7 +353,6 @@ void FlyricWindowThread::startUdpServer(){
 }
 
 void FlyricWindowThread::datagramReceived(){
-    qDebug()<<"RECEIVED";
     while(udp_socket->hasPendingDatagrams()){
         auto datagram = udp_socket->receiveDatagram();
         parseDatagram(datagram.data());
@@ -351,7 +387,12 @@ void FlyricWindowThread::parseDatagram(const QByteArray &data){
     switch(type){
     case UDP_DATA_TYPE_LOADLYRIC:
     {
-        QString * lyric_name = new QString(QString::fromUtf8(cdata + 8,data.size() - 8));
+        int actsize = 0;
+        while(8 + actsize < data.size() && cdata[8 + actsize]){
+            actsize++;
+        }
+
+        QString * lyric_name = new QString(QString::fromUtf8(cdata + 8,actsize));
         lyric_name = this->switch_lyric_name.fetchAndStoreRelaxed(lyric_name);
         if(lyric_name){
             //说明有一个歌词来不及换就又上了另一个歌词，以这个为准

@@ -92,7 +92,7 @@ Window {
 
     Text {
         x: 20
-        y: 12
+        y: 94
         text: qsTr("Default font file:")
         font.pixelSize: 12
     }
@@ -101,7 +101,7 @@ Window {
     TextField {
         id: defaultFontTextField
         x: 15
-        y: 30
+        y: 112
         width: 345
         height: 40
         text: flyricConfigManager.getDefaultFontPath()
@@ -109,21 +109,21 @@ Window {
 
     Button {
         x: 377
-        y: 30
+        y: 112
         text: qsTr("Browse")
         onClicked: defaultFontDialog.open()
     }
     /* font folder */
     Text {
         x: 20
-        y: 83
+        y: 158
         text: qsTr("Font folders:")
         font.pixelSize: 12
     }
 
     Rectangle{
         x: 15
-        y: 101
+        y: 176
         width: 345
         height: 145
         clip: false
@@ -214,7 +214,7 @@ Window {
 
     Button {
         x: 377
-        y: 106
+        y: 181
         width: 100
         height: 35
         text: qsTr("Add")
@@ -236,6 +236,7 @@ Window {
             flyricConfigManager.setFontFolder(folder)
 
             flyricConfigManager.setUdpPort(parseInt(portTextField.text))
+            flyricConfigManager.setFrcFolder(frcFolderTextField.text)
 
             flyricConfigManager.save()
 
@@ -251,7 +252,7 @@ Window {
 
     Text {
         x: 20
-        y: 266
+        y: 341
         text: qsTr("UDP Port:")
         font.pixelSize: 12
     }
@@ -259,7 +260,7 @@ Window {
     TextField {
         id: portTextField
         x: 88
-        y: 252
+        y: 327
         width: 75
         height: 40
         inputMethodHints: Qt.ImhDigitsOnly
@@ -275,7 +276,7 @@ Window {
 
     Text {
         x: 169
-        y: 266
+        y: 341
         text: qsTr("( 0 - 65535 )")
         font.pixelSize: 12
     }
@@ -294,10 +295,70 @@ Window {
         font.pixelSize: 12
     }
 
+    Text {
+        x: 15
+        y: 13
+        text: qsTr("Lyric(.frc) folders:")
+        font.pixelSize: 12
+    }
+
+    TextField {
+        id: frcFolderTextField
+        x: 15
+        y: 41
+        width: 345
+        height: 40
+        text: flyricConfigManager.getFrcFolder()
+    }
+    /* frc folder */
+    QtLab.FolderDialog{
+        id:frcFolderDialog
+        currentFolder:"file:///" + frcFolderTextField.text
+        onAccepted: {
+            const pre = "file:///"
+            var f = folder.toString()
+            // if(f.startsWith(pre))
+            if(f.substring(0,pre.length) === pre){
+                f = f.substring(pre.length)
+            }
+            frcFolderTextField.text = f
+        }
+    }
+    Button {
+        x: 377
+        y: 41
+        text: qsTr("Browse")
+        onClicked: frcFolderDialog.open()
+    }
+
 
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

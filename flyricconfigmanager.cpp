@@ -75,8 +75,18 @@ void FlyricConfigManager::getWindowConfigure(QJsonObject &obj){
         obj = QJsonObject();
     }
 }
+
+QString FlyricConfigManager::getFrcFolder(){
+    if(savedObject.contains("frcFolder")){
+        return savedObject["frcFolder"].toString();
+    }
+    return QFileInfo(".").absolutePath();
+}
+void FlyricConfigManager::setFrcFolder(QString frcFolder){
+    savedObject["frcFolder"]=frcFolder;
+}
+
 bool FlyricConfigManager::save(){
-    //TODO
     QFile saveFile(getConfigFilePath());
     if(!saveFile.open(QIODevice::WriteOnly)){
         return false;

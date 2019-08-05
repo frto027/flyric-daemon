@@ -14,10 +14,12 @@ public:
     Q_INVOKABLE QString getDefaultFontPath();
     Q_INVOKABLE QStringList getDefaultFontFolders();
     Q_INVOKABLE int getUdpPort();
+    Q_INVOKABLE QString getFrcFolder();
 
     Q_INVOKABLE bool setDefaultFont(QString defaultFont);
     Q_INVOKABLE bool setFontFolder(QStringList fonts);
     Q_INVOKABLE bool setUdpPort(int port);
+    Q_INVOKABLE void setFrcFolder(QString frcFolder);
 
     Q_INVOKABLE bool save();
     Q_INVOKABLE bool load();

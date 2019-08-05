@@ -28,7 +28,7 @@ extern "C"{
 #define DEFAULT_WINDOW_WIDTH 640
 #define DEFAULT_WINDOW_HEIGHT 480
 
-#define FONT_SIZE 60
+#define FONT_SIZE 30
 
 static char predefined_loading_lyric[] = "[curve]\n"
                                          "mm(x):x*x*x*x*x*x\n"

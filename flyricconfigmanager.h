@@ -34,7 +34,7 @@ public slots:
 private:
     QJsonObject savedObject;
     static QString getConfigFilePath(){
-        return "D:/test.json";
+        return "./config.json";
     }
 };
 

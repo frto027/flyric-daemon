@@ -170,10 +170,63 @@ void FlyricWindowThread::run(){
     }else{
         qDebug()<<"Freetype init success";
     }
-
     frpstartup();
 
     frg_startup(ftlib,config->getDefaultFontPath().toUtf8(),0);
+
+
+    //enum fonts
+    const char * supported_font_format[] = {"ttf","ttc","fnt"};
+    foreach(const QString & dir,config->getDefaultFontFolders()){
+        qDebug()<<"Reading font in dir:"<<dir;
+        QDirIterator dir_it(dir,QDir::Filter::Files,QDirIterator::Subdirectories);
+        QStringList fmaplist;
+
+        while(dir_it.hasNext()){
+            QFileInfo file(dir_it.next());
+            if(!file.isFile())
+                continue;
+
+            if(file.suffix().toLower() == "fmap"){
+                fmaplist<<file.absoluteFilePath();
+                continue;
+            }
+
+            size_t i;
+            for(i=0;i<sizeof(supported_font_format)/sizeof(*supported_font_format);i++){
+                if(file.suffix().toLower() == supported_font_format[i])
+                    break;
+            }
+            if(i == sizeof(supported_font_format)/sizeof(*supported_font_format)){
+                //qDebug()<<"Unsupport format "<<file.suffix();
+                continue;
+            }
+
+            qDebug()<<" find font file:"<<file.absoluteFilePath() <<" called:"<<file.baseName();
+            frg_add_font_file(ftlib,reinterpret_cast<frp_uint8 *>(file.baseName().toUtf8().data()),file.absoluteFilePath().toUtf8(),0);
+        }
+
+        //dir over
+        fmaplist.sort();
+        foreach(const QString & fmapfile,fmaplist){
+            qDebug()<<" parse fmap file:"<<fmapfile;
+            QFile fmap(fmapfile);
+            if(!fmap.open(QIODevice::ReadOnly|QIODevice::Text))
+                continue;
+            QTextStream in(&fmap);
+            QString line;
+            while(!(line = in.readLine()).isNull()){
+                auto list = line.split("=>");
+                if(list.length() > 1){
+                    qDebug()<<"alias (known)"<<list[0]<<" to (new)"<<list[1];
+                    frg_add_font_alias(
+                                reinterpret_cast<frp_uint8 *>(list[1].toUtf8().data()),
+                            reinterpret_cast<frp_uint8 *>(list[0].toUtf8().data()));
+                }
+            }
+
+        }
+    }
 
     frg_fontsize_set(FONT_SIZE);
     frg_screensize_set(frp_size(windConf.contains(KEY_W)?windConf[KEY_W].toInt():DEFAULT_WINDOW_WIDTH),

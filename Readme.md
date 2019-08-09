@@ -1,6 +1,8 @@
 # 这是什么
 这是一个正在开发中的flyric歌词显示软件，它通过接收UDP包来调整歌词显示的进度和加载歌词文件
 
+![preview_image](imgs/preview.gif)
+
 # Release
 
 需要安装服务器和客户端才能运行这个软件，服务器显示歌词，客户端则以插件或库的形式存在于其他的音乐播放器(如[foobar2000](http://www.foobar2000.org))中。

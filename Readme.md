@@ -5,7 +5,7 @@
 
 # Release
 
-需要安装服务器和客户端才能运行这个软件，服务器显示歌词，客户端则以插件或库的形式存在于其他的音乐播放器(如[foobar2000](http://www.foobar2000.org))中。
+需要安装服务器和客户端才能运行这个软件，服务器显示歌词，客户端则以插件或库的形式存在于其他的音乐播放器(如[foobar2000](http://www.foobar2000.org) [poweramp](https://powerampapp.com/))中。
 
 ## 服务端
 
@@ -31,6 +31,9 @@
 
 暂不发布，如有需要，直接用`flyric_client/flyric_client_java`文件夹下的`top.frto027.flyric.FlyricClient`类即可，如果在Android上使用，注意处理好网络和UI线程的逻辑。
 
+### Poweramp控件
+
+没错，就是Poweramp。安装后填入你的pc的ip地址，之后就可以在pc上看到歌词了。
 
 # IDE及开发环境
 如果想要编译或运行这个软件，我目前使用的开发环境是

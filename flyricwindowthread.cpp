@@ -401,7 +401,7 @@ void FlyricWindowThread::startUdpServer(){
         delete udp_socket;
     }
     udp_socket = new QUdpSocket(this);
-    udp_socket->bind(QHostAddress::LocalHost,quint16(port));
+    udp_socket->bind(QHostAddress::Any,quint16(port));
     connect(udp_socket,SIGNAL(readyRead()),this,SLOT(datagramReceived()));
 
 }

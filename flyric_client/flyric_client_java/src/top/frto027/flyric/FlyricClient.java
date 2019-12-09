@@ -12,21 +12,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FlyricClient {
     private final static int
-            UDP_DATA_TYPE_LOADLYRIC     = 1,
+            UDP_DATA_TYPE_LOAD_LYRIC     = 1,
             UDP_DATA_TYPE_PLAY_TIME     = 2,
             UDP_DATA_TYPE_PAUSE_TIME    = 3,
             UDP_DATA_TYPE_PLAY_NOW      = 4,
             UDP_DATA_TYPE_PAUSE_NOW     = 5;
 
-    DatagramSocket socket = null;
+    private DatagramSocket socket = null;
 
-    DatagramPacket play_packet,pause_packet,play_now_packet,pause_now_packet;
-    ByteBuffer play_packet_buffer,pause_packet_buffer,play_now_packet_buffer,pause_now_packet_buffer;
+    private DatagramPacket play_packet,pause_packet,play_now_packet,pause_now_packet;
+    private ByteBuffer play_packet_buffer,pause_packet_buffer,play_now_packet_buffer,pause_now_packet_buffer;
 
     private AtomicInteger counter = new AtomicInteger(0);
 
-    InetAddress target_addr;
-    int target_port;
+    private InetAddress target_addr;
+    private int target_port;
     public void connect(InetAddress addr,int port) throws SocketException {
         if(socket != null){
             socket.close();
@@ -76,7 +76,7 @@ public class FlyricClient {
             bts = ByteBuffer.allocate(4 + 4 + bts.length + 1)
                     .order(ByteOrder.BIG_ENDIAN)
                     .putInt(0)//init id
-                    .putInt(UDP_DATA_TYPE_LOADLYRIC)
+                    .putInt(UDP_DATA_TYPE_LOAD_LYRIC)
                     .put(bts)
                     .put((byte)0)
                     .array();
@@ -88,13 +88,13 @@ public class FlyricClient {
         }
     }
 
-    public void pause(long timems) throws IOException {
+    public void pause(long time_ms) throws IOException {
         if(socket == null)
             return;
         pause_packet_buffer.position(0);
         pause_packet_buffer.putInt(counter.incrementAndGet());
         pause_packet_buffer.position(8);
-        pause_packet_buffer.putLong(timems);
+        pause_packet_buffer.putLong(time_ms);
         socket.send(pause_packet);
     }
 
@@ -106,17 +106,17 @@ public class FlyricClient {
         socket.send(pause_now_packet);
     }
     //使用系统时钟同步
-    public void play(long timems) throws IOException{
-        play_begin(new Date().getTime() - timems);
+    public void play(long time_ms) throws IOException{
+        play_begin(new Date().getTime() - time_ms);
     }
     //发送原始数据
-    public void play_begin(long begin_timems) throws IOException {
+    public void play_begin(long begin_time_ms) throws IOException {
         if(socket == null)
             return;
         play_packet_buffer.position(0);
         play_packet_buffer.putInt(counter.incrementAndGet());
         play_packet_buffer.position(8);
-        play_packet_buffer.putLong(begin_timems);
+        play_packet_buffer.putLong(begin_time_ms);
         socket.send(play_packet);
     }
 

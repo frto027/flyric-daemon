@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">FlyricPowerampClient</string>
+    <string name="start">start</string>
+    <string name="stop">stop</string>
+    <string name="ip_address">ip address</string>
+    <string name="format">format</string>
+    <string name="title_default">%title%</string>
+    <string name="port">port</string>
+    <string name="port_default">9588</string>
+</resources>

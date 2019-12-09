@@ -64,6 +64,18 @@ int FlyricConfigManager::getUdpPort(){
     return 9588;
 }
 
+qint64 FlyricConfigManager::getTimeOffset(){
+    if(savedObject.contains("timeOffset")){
+        return qint64(savedObject["timeOffset"].toDouble());
+    }
+    return 0;
+}
+
+bool FlyricConfigManager::setTimeOffset(qint64 offset){
+    savedObject["timeOffset"]=double(offset);
+    return true;
+}
+
 void FlyricConfigManager::setWindowConfigure(const QJsonObject &obj){
     savedObject["windConf"]=obj;
     save();

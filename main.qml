@@ -40,6 +40,14 @@ Window {
                     text:"play"
                     onTriggered: flyricWindowThread.play_continue()
                 }
+                QtLab.MenuItem{
+                    text:"enable sync"
+                    onTriggered: flyricWindowThread.switch_sync(true)
+                }
+                QtLab.MenuItem{
+                    text:"disable sync"
+                    onTriggered: flyricWindowThread.switch_sync(false)
+                }
             }
 
             QtLab.MenuItem{
@@ -237,6 +245,7 @@ Window {
 
             flyricConfigManager.setUdpPort(parseInt(portTextField.text))
             flyricConfigManager.setFrcFolder(frcFolderTextField.text)
+            flyricConfigManager.setTimeOffset(offsetTextField.text)
 
             flyricConfigManager.save()
 
@@ -279,6 +288,21 @@ Window {
         y: 341
         text: qsTr("( 0 - 65535 )")
         font.pixelSize: 12
+    }
+
+    Text{
+        x:20
+        y:380
+        text: qsTr("time offset:")
+        font.pixelSize: 12
+    }
+
+    TextField{
+        id:offsetTextField
+        x:100
+        y:370
+        inputMethodHints: Qt.ImhDigitsOnly
+        text: flyricConfigManager.getTimeOffset() + ""
     }
 
     TextEdit {
@@ -335,6 +359,18 @@ Window {
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -49,10 +49,26 @@ static char predefined_loading_lyric[] = "[curve]\n"
                                          ",>>200,ric\n,, -\n,,0.0.0\n,,-\n,,preview\n";
 static FRPFile * predefined_loading_lyric_file;
 #define PREDEFINED_LOAD_LYRIC_TIME 10000
+static char predefined_sync_lyric_header[] =
+"[curve]\n\
+[anim]\n\
+[flyc]\n\
+Type,StartTime,Text,Duration,Anim,ColorR,ColorG,ColorB,ColorA,AnchorX,AnchorY,SelfAnchorX,SelfAnchorY\n\
+line,0,N,10000,,1.0000000,0.1490196,0.0000000,0.0000000,0.5,0.5,0.5,-0.5\n\
+word,,SYNC\n\
+line,0,N,10,,1.0000000,0.1490196,0.0000000,0.0000000,0.5,0.5,0.5,0.5\n\
+word,,0000\n";
+
+static char predefined_sync_lyric_subs[] = "line,%04d\nword,,%04d\n"; /* Note:size of is a trick. */
+static char predefined_sync_lyric[sizeof(predefined_sync_lyric_header) + (PREDEFINED_LOAD_LYRIC_TIME/10+1) * (sizeof(predefined_sync_lyric_subs) - 1)];
+static FRPFile * predefined_sync_lyric_file = nullptr;
+
+static FRPFile * current_predefined_lyric_file = nullptr;
 
 void FlyricWindowThread::createAndShow(FlyricConfigManager *manager){
     config = manager;
     config->getWindowConfigure(windConf);
+    timeOffset = config->getTimeOffset();
 
     start();
 }
@@ -62,7 +78,7 @@ void FlyricWindowThread::exitWindow(){
 }
 
 qint64 FlyricWindowThread::getTime(){
-    return QDateTime::currentMSecsSinceEpoch();
+    return QDateTime::currentMSecsSinceEpoch() + timeOffset;
 }
 
 void FlyricWindowThread::play(qint64 play_begin_time){
@@ -81,6 +97,11 @@ void FlyricWindowThread::pause(qint64 paused_time){
 void FlyricWindowThread::pause_now(){
     if(!play_is_paused)
         pause(getTime() - play_begin_time);
+}
+
+void FlyricWindowThread::switch_sync(bool sync){
+    isSync = sync;
+    play(getTime());
 }
 
 void FlyricWindowThread::switch_lyric(QString lyric_name){
@@ -114,6 +135,7 @@ void FlyricWindowThread::run(){
     bool isTransparent = this->isTransparent;
     bool isResizeable = this->isResizeable;
     bool isTop = this->isTop;
+    bool isSync = this->isSync;
 
     bool checkIgnoreMouse = true;
     qint64 current_lyric_time;
@@ -238,7 +260,24 @@ void FlyricWindowThread::run(){
     });
 
     predefined_loading_lyric_file = frpopen(reinterpret_cast<unsigned char *>(predefined_loading_lyric),sizeof(predefined_loading_lyric),1);
+
+    //init predefined_sync_lyric_header
+    if(predefined_sync_lyric_file == nullptr){
+        char * result = predefined_sync_lyric;
+        strcpy(predefined_sync_lyric,predefined_sync_lyric_header);
+        for(int i=10;i<=PREDEFINED_LOAD_LYRIC_TIME;i+=10){
+            while(*result)
+                result++;
+            sprintf(result,predefined_sync_lyric_subs,i,i);
+        }
+        while(*result)
+            result++;
+        predefined_sync_lyric_file = frpopen(reinterpret_cast<unsigned char *>(predefined_sync_lyric),sizeof(predefined_sync_lyric),0);
+        qDebug()<<"now size is "<<(result - predefined_sync_lyric)<<" and actually is "<<sizeof(predefined_sync_lyric);
+    }
+
     frg_loadlyric(predefined_loading_lyric_file);
+    current_predefined_lyric_file = predefined_loading_lyric_file;
 
     /* Debug only */
     //load a temp lyric
@@ -261,6 +300,7 @@ void FlyricWindowThread::run(){
     double last_time = glfwGetTime();
     while (noBreak && !glfwWindowShouldClose(window))
     {
+        //render lyrics
         double remain = glfwGetTime() - last_time;
         if(remain <  1./60){
             msleep(static_cast<unsigned long>(1./60 - remain));
@@ -274,6 +314,7 @@ void FlyricWindowThread::run(){
                 qDebug()<<"Switch lyric:"<<*lyric_name;
                 if(current_lyric_name != *lyric_name){
                     frg_unloadlyrc();
+                    current_predefined_lyric_file = nullptr;
                     if(lyric_file)
                         frpdestroy(lyric_file);
                     lyric_file = nullptr;
@@ -298,11 +339,35 @@ void FlyricWindowThread::run(){
                     } catch (int) {
                         //load lyric failed
                         frg_loadlyric(predefined_loading_lyric_file);
+                        current_predefined_lyric_file = predefined_loading_lyric_file;
                         lyric_is_loaded = false;
                         current_lyric_name = "";
                     }
                 }
                 delete lyric_name;
+            }
+        }
+
+        if(isSync != this->isSync){
+            isSync = this->isSync;
+            if(isSync){
+                frg_unloadlyrc();
+                if(lyric_file)
+                    frpdestroy(lyric_file);
+                lyric_file = nullptr;
+                frg_loadlyric(predefined_sync_lyric_file);
+                current_predefined_lyric_file = predefined_sync_lyric_file;
+                lyric_is_loaded = false;
+                current_lyric_name = "";
+            }else{
+                frg_unloadlyrc();
+                if(lyric_file)
+                    frpdestroy(lyric_file);
+                lyric_file = nullptr;
+                frg_loadlyric(predefined_loading_lyric_file);
+                current_predefined_lyric_file = predefined_loading_lyric_file;
+                lyric_is_loaded = false;
+                current_lyric_name = "";
             }
         }
 
@@ -336,9 +401,15 @@ void FlyricWindowThread::run(){
             glfwGetWindowSize(window,&w,&h);
             glViewport(0, 0, w,h);
         }
-
+        if(isTransparent){
+            glClearColor(0,0,0,0);
+        }else{
+            glClearColor(0,0,0,1);
+        }
         glClear(GL_COLOR_BUFFER_BIT);
+
         {
+            //render lyric
             if(lyric_is_loaded){
                 if(play_is_paused){
                     current_lyric_time = paused_time;
@@ -352,7 +423,7 @@ void FlyricWindowThread::run(){
                 qint64 tim = getTime() - play_begin_time;
                 tim %= PREDEFINED_LOAD_LYRIC_TIME;
 
-                for(auto node = frp_play_getline_by_time(predefined_loading_lyric_file,tim);node;node=node->next){
+                for(auto node = frp_play_getline_by_time(current_predefined_lyric_file,tim);node;node=node->next){
                     frg_renderline(node->line,tim);
                 }
             }

@@ -29,6 +29,8 @@ public slots:
     void pause(qint64 paused_time);
     void pause_now();
 
+    void switch_sync(bool sync);
+
     void switch_lyric(QString lyric_name);
 
     void exitWindow();
@@ -52,6 +54,9 @@ private:
     QAtomicPointer<QString> switch_lyric_name;
 
     QUdpSocket * udp_socket = nullptr;
+
+    qint64 timeOffset = 0;
+    bool isSync = false;
 
     void parseDatagram(const QByteArray& data);
 

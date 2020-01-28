@@ -16,17 +16,27 @@ public class FlyricClient {
             UDP_DATA_TYPE_PLAY_TIME     = 2,
             UDP_DATA_TYPE_PAUSE_TIME    = 3,
             UDP_DATA_TYPE_PLAY_NOW      = 4,
-            UDP_DATA_TYPE_PAUSE_NOW     = 5;
+            UDP_DATA_TYPE_PAUSE_NOW     = 5,
+            UDP_DATA_TYPE_SYNC_NOW      = 6;
 
     private DatagramSocket socket = null;
 
-    private DatagramPacket play_packet,pause_packet,play_now_packet,pause_now_packet;
-    private ByteBuffer play_packet_buffer,pause_packet_buffer,play_now_packet_buffer,pause_now_packet_buffer;
+    private DatagramPacket play_packet,pause_packet,play_now_packet,pause_now_packet,sync_packet;
+    private ByteBuffer play_packet_buffer,pause_packet_buffer,play_now_packet_buffer,pause_now_packet_buffer,sync_packet_buffer;
 
     private AtomicInteger counter = new AtomicInteger(0);
 
     private InetAddress target_addr;
     private int target_port;
+
+    private long timeOffset = 0;
+    private long getTime(){
+        return getRealTime() + timeOffset;
+    }
+    private long getRealTime(){
+        return new Date().getTime();
+    }
+
     public void connect(InetAddress addr,int port) throws SocketException {
         if(socket != null){
             socket.close();
@@ -66,6 +76,13 @@ public class FlyricClient {
                 .array();
         pause_now_packet = new DatagramPacket(bts,bts.length,target_addr,target_port);
 
+        sync_packet_buffer = ByteBuffer.allocate(4+4+8).order(ByteOrder.BIG_ENDIAN);
+        bts = sync_packet_buffer
+                .putInt(0)//id
+                .putInt(UDP_DATA_TYPE_SYNC_NOW)
+                .putLong(0)
+                .array();
+        sync_packet = new DatagramPacket(bts,bts.length,target_addr,target_port);
     }
 
     public void load(String name) throws IOException {
@@ -107,7 +124,7 @@ public class FlyricClient {
     }
     //使用系统时钟同步
     public void play(long time_ms) throws IOException{
-        play_begin(new Date().getTime() - time_ms);
+        play_begin(getTime() - time_ms);
     }
     //发送原始数据
     public void play_begin(long begin_time_ms) throws IOException {
@@ -127,6 +144,42 @@ public class FlyricClient {
         play_now_packet_buffer.putInt(counter.incrementAndGet());
         socket.send(play_now_packet);
     }
+
+    public void sync() throws IOException {
+        sync(false,0);
+    }
+    public boolean sync_strict(int timeout) throws IOException {
+        return sync(true,timeout);
+    }
+
+    private boolean sync(boolean strict,int timeout) throws IOException {
+        if(socket == null)
+            return false;
+        sync_packet_buffer.position(0);
+        sync_packet_buffer.putInt(counter.incrementAndGet());
+        sync_packet_buffer.position(8);
+        sync_packet_buffer.putLong(getRealTime());
+        socket.send(sync_packet);
+        if(strict){
+            int origin = socket.getSoTimeout();
+            socket.setSoTimeout(timeout);
+            try{
+                socket.receive(sync_packet);
+                long time2 = getRealTime();
+                sync_packet_buffer.position(8);
+                long time1 = sync_packet_buffer.getLong();
+                timeOffset = (time1 + (time2 - time1)/2) - time2;
+                return true;
+            }catch (SocketTimeoutException e){
+                //do nothing
+                return false;
+            }finally {
+                socket.setSoTimeout(origin);
+            }
+        }else{
+            return false;
+        }
+    }
 	//Debug only
     public static void main(String [] a) throws IOException {
         /*
@@ -139,6 +192,8 @@ public class FlyricClient {
         play 5000
         play 0
 
+        sync
+        syncs 1000
         load lyric_path
 
          */
@@ -170,6 +225,13 @@ public class FlyricClient {
             if(chs[0].equals("load")){
                 String ld = chs.length > 1 ? chs[1] : "";
                 client.load(ld);
+            }
+            if(chs[0].equals("sync")){
+                client.sync();
+            }
+            if(chs[0].equals("syncs")){
+                client.sync_strict(Integer.parseInt(chs[1]));
+                System.out.println("[sync over]");
             }
         }
     }

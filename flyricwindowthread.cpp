@@ -78,8 +78,14 @@ void FlyricWindowThread::exitWindow(){
 }
 
 qint64 FlyricWindowThread::getTime(){
-    return QDateTime::currentMSecsSinceEpoch() + timeOffset;
+    return getRealTime() + timeOffset;
 }
+
+
+qint64 FlyricWindowThread::getRealTime(){
+    return QDateTime::currentMSecsSinceEpoch();
+}
+
 
 void FlyricWindowThread::play(qint64 play_begin_time){
     this->play_begin_time = play_begin_time;
@@ -480,28 +486,34 @@ void FlyricWindowThread::startUdpServer(){
 void FlyricWindowThread::datagramReceived(){
     while(udp_socket->hasPendingDatagrams()){
         auto datagram = udp_socket->receiveDatagram();
-        parseDatagram(datagram.data());
+        QByteArray array = parseDatagram(datagram.data());
+        if(array.length() > 0){
+            udp_socket->writeDatagram(datagram.makeReply(array));
+        }
     }
 }
-void FlyricWindowThread::parseDatagram(const QByteArray &data){
+QByteArray FlyricWindowThread::parseDatagram(const QByteArray &data){
+    const QByteArray EMPTY;
     /* skip id */
     const quint32 skip_range = 0x7FFFFFFF;
     static quint32 skip_data_from = 0 - skip_range;
     static quint32 skip_data_to = 0;
+    qint64 recTime = getRealTime();
     const char * cdata = data.data();
+
     if(data.length() < 8){
         //invalid data
-        return;
+        return EMPTY;
     }
     quint32 id = qFromBigEndian<quint32>(cdata);
     if(id){
         if(skip_data_from < skip_data_to){
             if(skip_data_from <= id && id <= skip_data_to){
-                return;
+                return EMPTY;
             }
         }else{
             if(skip_data_from <= id || id <= skip_data_to){
-                return;
+                return EMPTY;
             }
         }
     }
@@ -528,7 +540,7 @@ void FlyricWindowThread::parseDatagram(const QByteArray &data){
     case UDP_DATA_TYPE_PAUSE_TIME:
     {
         if(data.length() < 16)
-            return;
+            return EMPTY;
         qint64 time = qFromBigEndian<qint64>(cdata + 8);
         this->pause(time);
     }
@@ -536,7 +548,7 @@ void FlyricWindowThread::parseDatagram(const QByteArray &data){
     case UDP_DATA_TYPE_PLAY_TIME:
     {
         if(data.length() < 16)
-            return;
+            return EMPTY;
         qint64 time = qFromBigEndian<qint64>(cdata + 8);
         this->play(time);
     }
@@ -547,5 +559,15 @@ void FlyricWindowThread::parseDatagram(const QByteArray &data){
     case UDP_DATA_TYPE_PAUSE_NOW:
         this->pause_now();
         break;
+    case UDP_DATA_TYPE_SYNC_NOW:
+    {
+        if(data.length() < 16)
+            return EMPTY;
+        qint64 syncTime = qFromBigEndian<qint64>(cdata + 8);
+        timeOffset = syncTime - recTime;
+        //send data back
+        return data;
     }
+    }
+    return EMPTY;
 }

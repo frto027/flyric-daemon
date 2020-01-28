@@ -58,7 +58,7 @@ private:
     qint64 timeOffset = 0;
     bool isSync = false;
 
-    void parseDatagram(const QByteArray& data);
+    QByteArray parseDatagram(const QByteArray& data);
 
 protected:
     ///
@@ -66,6 +66,7 @@ protected:
     /// \return time ms
     ///
     virtual qint64 getTime();
+    virtual qint64 getRealTime();
 
 };
 
@@ -74,5 +75,6 @@ protected:
 #define UDP_DATA_TYPE_PAUSE_TIME    3
 #define UDP_DATA_TYPE_PLAY_NOW      4
 #define UDP_DATA_TYPE_PAUSE_NOW     5
+#define UDP_DATA_TYPE_SYNC_NOW      6
 
 #endif // FLYRICWINDOWTHREAD_H

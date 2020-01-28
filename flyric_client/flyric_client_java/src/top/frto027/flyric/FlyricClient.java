@@ -24,7 +24,7 @@ public class FlyricClient {
     private DatagramPacket play_packet,pause_packet,play_now_packet,pause_now_packet,sync_packet;
     private ByteBuffer play_packet_buffer,pause_packet_buffer,play_now_packet_buffer,pause_now_packet_buffer,sync_packet_buffer;
 
-    private AtomicInteger counter = new AtomicInteger(0);
+    private AtomicInteger counter = new AtomicInteger(-1);
 
     private InetAddress target_addr;
     private int target_port;

@@ -83,8 +83,15 @@ public class WorkService extends Service{
 
             ARG_STR_FORMAT = "fmt",
             ARG_INT_PORT = "port",
-            ARG_STR_IP = "ip"
+            ARG_STR_IP = "ip",
+            ARG_SYNC_MODE = "sync_mode",
+            ARG_SYNC_TIMEOUT = "sync_timeout",
+
+            SYNC_MODE_LOOSE = "sync_loose",
+            SYNC_MODE_STRICT = "sync_strict"
             ;
+
+    public final static int DEFAULT_SYNC_TIMEOUT = 5000;
 
     private final static String TAG = "WorkService";
 
@@ -428,12 +435,22 @@ public class WorkService extends Service{
                 try {
                     final InetAddress addr = InetAddress.getByName(config_ip);
                     final int port = config_port;
+                    final String sync_mode = intent.getStringExtra(ARG_SYNC_MODE);
+                    final int sync_timeout = intent.getIntExtra(ARG_SYNC_TIMEOUT,DEFAULT_SYNC_TIMEOUT);
                     new Thread(){
                         @Override
                         public void run() {
                             synchronized (client){
                                 try {
                                     client.connect(addr,port);
+                                    if(sync_mode != null){
+                                        if(SYNC_MODE_LOOSE.equals(sync_mode)){
+                                            client.sync();
+                                        }else if(SYNC_MODE_STRICT.equals(sync_mode)){
+                                            boolean sync_result = client.sync_strict(sync_timeout);
+                                            reportSyncResultAsync(sync_result);
+                                        }
+                                    }
                                 } catch (IOException e) {
                                     Toast.makeText(WorkService.this,"Unknown host.",Toast.LENGTH_SHORT).show();
                                     Log.e(TAG,"",e);
@@ -459,5 +476,14 @@ public class WorkService extends Service{
         }
 
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void reportSyncResultAsync(final boolean sync_result) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(WorkService.this,sync_result?R.string.toast_sync_success:R.string.toast_sync_failed,Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

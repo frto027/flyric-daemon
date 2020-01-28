@@ -7,4 +7,7 @@
     <string name="title_default">%title%</string>
     <string name="port">port</string>
     <string name="port_default">9588</string>
+    <string name="toast_sync_success">strict sync success</string>
+    <string name="toast_sync_failed">sync no response</string>
+    <string name="sync_time">sync system time</string>
 </resources>

@@ -10,4 +10,5 @@
     <string name="toast_sync_success">strict sync success</string>
     <string name="toast_sync_failed">sync no response</string>
     <string name="sync_time">sync system time</string>
+    <string name="ext_offset">extra offset</string>
 </resources>

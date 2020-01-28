@@ -78,4 +78,16 @@
         app:layout_constraintStart_toEndOf="@+id/startBtn"
         app:layout_constraintTop_toTopOf="@+id/startBtn" />
 
+    <EditText
+        android:id="@+id/extOffsetText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:ems="10"
+        android:hint="@string/ext_offset"
+        android:inputType="numberSigned"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/startBtn" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

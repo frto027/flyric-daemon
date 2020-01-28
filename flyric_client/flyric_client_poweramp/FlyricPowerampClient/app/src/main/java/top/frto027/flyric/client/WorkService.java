@@ -80,6 +80,7 @@ public class WorkService extends Service{
             ACTION_START = "StartAct",
             ACTION_STOP = "StopAct",
             ACTION_FORMAT_TITLE = "FmtAct",
+            ACTION_EXT_OFFSET = "ExtOffsetAct",
 
             ARG_STR_FORMAT = "fmt",
             ARG_INT_PORT = "port",
@@ -87,11 +88,15 @@ public class WorkService extends Service{
             ARG_SYNC_MODE = "sync_mode",
             ARG_SYNC_TIMEOUT = "sync_timeout",
 
+            ARG_EXT_OFFSET = "ext_offset",
+
             SYNC_MODE_LOOSE = "sync_loose",
             SYNC_MODE_STRICT = "sync_strict"
             ;
 
     public final static int DEFAULT_SYNC_TIMEOUT = 5000;
+
+    private int extOffset = 0;
 
     private final static String TAG = "WorkService";
 
@@ -280,7 +285,7 @@ public class WorkService extends Service{
                 public void run() {
                     synchronized (client){
                         try {
-                            client.play_begin(timestamp - pos * 1000);
+                            client.play_begin(timestamp - pos * 1000 + extOffset);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -432,6 +437,9 @@ public class WorkService extends Service{
                     config_format = "%title%";
                 setConfigFormat(config_format);
                 config_port = intent.getIntExtra(ARG_INT_PORT,9588);
+
+                extOffset = intent.getIntExtra(ARG_EXT_OFFSET,extOffset);
+
                 try {
                     final InetAddress addr = InetAddress.getByName(config_ip);
                     final int port = config_port;
@@ -470,7 +478,9 @@ public class WorkService extends Service{
             }else if(action.equals(ACTION_FORMAT_TITLE)){
                 //what should i do? return a formatted title, or send a broadcast?
 
-            }else{
+            }else if(action.equals(ACTION_EXT_OFFSET)){
+                extOffset = intent.getIntExtra(ARG_EXT_OFFSET,0);
+            }else {
                 Log.d(TAG,"Unsupported intent action:"+action);
             }
         }
